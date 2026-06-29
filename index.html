@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="bn" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shopping area admin</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 4px; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        
+        /* Layout & Animations */
+        #sidebar { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .view-section { display: none; animation: fadeIn 0.4s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Login Screen Gradient Animation */
+        .login-bg { background: linear-gradient(-45deg, #1e1b4b, #312e81, #4f46e5, #0f172a); background-size: 400% 400%; animation: gradientBG 15s ease infinite; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        /* Glassmorphism & UI Tweaks */
+        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .modal-overlay { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); }
+        .text-gradient { background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        @media print {
+            #sidebar, #topHeader, .no-print { display: none !important; }
+            #mainApp { width: 100% !important; margin: 0 !important; padding: 0 !important; display: block !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 overflow-hidden">
+
+    <!-- ================= 1. UNIQUE LOGIN SCREEN ================= -->
+    <section id="loginScreen" class="h-screen w-full login-bg flex items-center justify-center p-4 z-50 fixed inset-0">
+        <div class="glass-panel p-8 md:p-10 rounded-3xl shadow-2xl w-full max-w-md text-center transform transition-all border-t border-white/20">
+            <div class="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl border-4 border-white/10">
+                <i class="fa-solid fa-shield-halved text-4xl text-white"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-white mb-2">Nexus Admin</h2>
+            <p class="text-indigo-200 text-sm mb-8 font-medium">Exclusive secure access portal.</p>
+            
+            <form id="adminAuthForm" class="space-y-5">
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-4 text-indigo-300"></i>
+                    <input type="email" id="authEmail" placeholder="Admin Email" class="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-indigo-200 outline-none focus:bg-white/20 focus:border-indigo-400 transition" required>
+                </div>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-4 text-indigo-300"></i>
+                    <input type="password" id="authPass" placeholder="Password" class="w-full pl-12 pr-4 py-3.5 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-indigo-200 outline-none focus:bg-white/20 focus:border-indigo-400 transition" required>
+                </div>
+                <button type="submit" id="authBtn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3.5 rounded-2xl font-bold text-lg hover:shadow-[0_0_20px_rgba(99,102,241,0.6)] transition shadow-lg mt-4 border border-indigo-400/30">
+                    Authenticate
+                </button>
+            </form>
+            <p class="text-xs text-white/50 mt-8 tracking-wider">eShop V2 Dashboard &copy; 2026</p>
+        </div>
+    </section>
+
+    <!-- ================= 2. MAIN DASHBOARD APP ================= -->
+    <div id="mainApp" class="hidden flex h-screen w-full">
+        
+        <!-- Premium Sidebar -->
+        <aside id="sidebar" class="bg-gradient-to-b from-indigo-950 via-indigo-900 to-slate-900 text-white w-64 flex-shrink-0 h-full flex flex-col absolute md:relative z-40 transform -translate-x-full md:translate-x-0 shadow-2xl border-r border-indigo-800/30">
+            <div class="h-20 flex items-center justify-between px-6 border-b border-white/10">
+                <h2 class="text-2xl font-extrabold tracking-widest flex items-center gap-3 bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 to-purple-300">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i> NEXUS
+                </h2>
+                <button class="md:hidden text-indigo-300 hover:text-white" onclick="toggleSidebar()"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-6 space-y-2 px-4 custom-scroll">
+                <button onclick="switchView('dashboard')" class="nav-btn w-full flex items-center p-3.5 rounded-2xl hover:bg-white/10 transition active-nav" data-view="dashboard">
+                    <i class="fa-solid fa-chart-pie w-6 text-center text-indigo-400"></i> <span class="ml-3 font-semibold text-sm">Dashboard</span>
+                </button>
+                <button onclick="switchView('products')" class="nav-btn w-full flex items-center p-3.5 rounded-2xl hover:bg-white/10 transition" data-view="products">
+                    <i class="fa-solid fa-box-open w-6 text-center text-blue-400"></i> <span class="ml-3 font-semibold text-sm">Products</span>
+                </button>
+                <button onclick="switchView('orders')" class="nav-btn w-full flex items-center p-3.5 rounded-2xl hover:bg-white/10 transition relative" data-view="orders">
+                    <i class="fa-solid fa-cart-arrow-down w-6 text-center text-emerald-400"></i> <span class="ml-3 font-semibold text-sm">Order Inbox</span>
+                    <span id="newOrderBadge" class="absolute right-3 bg-red-500 text-xs px-2 py-0.5 rounded-full hidden shadow-lg animate-pulse font-bold">New</span>
+                </button>
+                <button onclick="switchView('customers')" class="nav-btn w-full flex items-center p-3.5 rounded-2xl hover:bg-white/10 transition" data-view="customers">
+                    <i class="fa-solid fa-users w-6 text-center text-purple-400"></i> <span class="ml-3 font-semibold text-sm">Customers</span>
+                </button>
+                <!-- NEW CHAT SYSTEM MENU -->
+                <button onclick="switchView('chats')" class="nav-btn w-full flex items-center p-3.5 rounded-2xl hover:bg-white/10 transition relative" data-view="chats">
+                    <i class="fa-solid fa-comment-dots w-6 text-center text-pink-400"></i> <span class="ml-3 font-semibold text-sm">Support Chats</span>
+                    <span id="newChatBadge" class="absolute right-3 bg-red-500 text-xs px-2 py-0.5 rounded-full hidden shadow-lg animate-pulse font-bold">New</span>
+                </button>
+
+                <button onclick="switchView('banners')" class="nav-btn w-full flex items-center p-3.5 rounded-2xl hover:bg-white/10 transition" data-view="banners">
+                    <i class="fa-solid fa-bullhorn w-6 text-center text-orange-400"></i> <span class="ml-3 font-semibold text-sm">Banners & Ads</span>
+                </button>
+                <button onclick="switchView('settings')" class="nav-btn w-full flex items-center p-3.5 rounded-2xl hover:bg-white/10 transition" data-view="settings">
+                    <i class="fa-solid fa-gear w-6 text-center text-slate-400"></i> <span class="ml-3 font-semibold text-sm">Settings</span>
+                </button>
+            </nav>
+            <div class="p-5 border-t border-white/10">
+                <button onclick="logoutAdmin()" class="w-full flex items-center justify-center p-3.5 rounded-2xl bg-white/5 text-red-400 hover:bg-red-500 hover:text-white transition font-bold text-sm border border-red-500/20">
+                    <i class="fa-solid fa-power-off mr-2"></i> Terminate Session
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content wrapper -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+            
+            <!-- Top Header -->
+            <header id="topHeader" class="h-20 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-8 z-30">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="text-slate-600 dark:text-slate-300 hover:text-indigo-600 text-2xl"><i class="fa-solid fa-bars-staggered"></i></button>
+                    <!-- Global Search -->
+                    <div class="hidden sm:flex relative items-center">
+                        <i class="fa-solid fa-search absolute left-4 text-slate-400"></i>
+                        <input type="text" id="globalSearch" placeholder="Quick Search..." class="pl-12 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none w-80 text-sm font-medium transition">
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <button id="themeToggle" class="text-2xl text-slate-500 dark:text-slate-400 hover:text-indigo-500 transition"><i class="fa-solid fa-moon"></i></button>
+                    <div class="flex items-center gap-3 bg-white dark:bg-slate-800 py-1.5 px-2 pr-4 rounded-full cursor-pointer hover:shadow-lg border border-slate-200 dark:border-slate-700 transition" onclick="switchView('settings')">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=6366F1&color=fff&rounded=true" class="w-10 h-10 rounded-full border-2 border-indigo-100 dark:border-slate-700 shadow-sm">
+                        <span class="hidden md:block font-bold text-sm bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Super Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Views Area -->
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 pb-24 custom-scroll">
+                
+                <!-- 1. DASHBOARD -->
+                <section id="view-dashboard" class="view-section active h-full">
+                    <div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                            <div>
+                                <h2 class="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">Dashboard Overview</h2>
+                                <p class="text-slate-500 text-sm font-medium mt-1">Welcome back! Here's what's happening with your store.</p>
+                            </div>
+                            <button onclick="window.print()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:shadow-indigo-500/30 hover:bg-indigo-700 no-print flex items-center gap-2 transition-all"><i class="fa-solid fa-print"></i> Generate Report</button>
+                        </div>
+                        
+                        <!-- Stat Cards -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-5 mb-8">
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group hover:-translate-y-1 transition-all">
+                                <div class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 dark:bg-indigo-500/10 rounded-full group-hover:scale-150 transition duration-500"></div>
+                                <p class="text-sm text-slate-500 relative z-10 font-bold tracking-wide uppercase">Total Sales</p>
+                                <h3 class="text-3xl font-extrabold mt-2 relative z-10 text-slate-800 dark:text-white" id="statTotalSales">৳0</h3>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group hover:-translate-y-1 transition-all">
+                                <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 dark:bg-emerald-500/10 rounded-full group-hover:scale-150 transition duration-500"></div>
+                                <p class="text-sm text-slate-500 relative z-10 font-bold tracking-wide uppercase">Today's Sales</p>
+                                <h3 class="text-3xl font-extrabold mt-2 relative z-10 text-emerald-600 dark:text-emerald-400" id="statTodaySales">৳0</h3>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group hover:-translate-y-1 transition-all">
+                                <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 dark:bg-blue-500/10 rounded-full group-hover:scale-150 transition duration-500"></div>
+                                <p class="text-sm text-slate-500 relative z-10 font-bold tracking-wide uppercase">Total Orders</p>
+                                <h3 class="text-3xl font-extrabold mt-2 relative z-10 text-slate-800 dark:text-white" id="statTotalOrders">0</h3>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group hover:-translate-y-1 transition-all">
+                                <div class="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 dark:bg-amber-500/10 rounded-full group-hover:scale-150 transition duration-500"></div>
+                                <p class="text-sm text-slate-500 relative z-10 font-bold tracking-wide uppercase">Pending</p>
+                                <h3 class="text-3xl font-extrabold mt-2 relative z-10 text-amber-500 dark:text-amber-400" id="statPending">0</h3>
+                            </div>
+                            <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 relative overflow-hidden group hover:-translate-y-1 transition-all">
+                                <div class="absolute -right-6 -top-6 w-24 h-24 bg-rose-50 dark:bg-rose-500/10 rounded-full group-hover:scale-150 transition duration-500"></div>
+                                <p class="text-sm text-slate-500 relative z-10 font-bold tracking-wide uppercase">Out of Stock</p>
+                                <h3 class="text-3xl font-extrabold mt-2 relative z-10 text-rose-500 dark:text-rose-400" id="statOutOfStock">0</h3>
+                            </div>
+                        </div>
+
+                        <!-- Revenue Flow Chart -->
+                        <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="font-extrabold text-lg text-slate-800 dark:text-slate-200">Revenue Flow Analysis</h3>
+                                <div class="bg-slate-100 dark:bg-slate-700 px-4 py-1.5 rounded-full text-xs font-bold text-slate-500 dark:text-slate-300">Last 7 Days</div>
+                            </div>
+                            <div class="relative w-full h-[400px]">
+                                <canvas id="salesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. PRODUCT MANAGEMENT -->
+                <section id="view-products" class="view-section">
+                    <div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                            <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white">Product Catalog</h2>
+                            <button onclick="openProductModal()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-indigo-500/30 hover:bg-indigo-700 flex items-center gap-2 transition-all"><i class="fa-solid fa-plus"></i> Add New Product</button>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+                            <div class="p-5 border-b dark:border-slate-700 flex flex-col sm:flex-row gap-4 items-center bg-slate-50/50 dark:bg-slate-800/50">
+                                <div class="relative w-full sm:w-1/2">
+                                    <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                                    <input type="text" id="searchProduct" onkeyup="filterTable('tblProducts', this.value)" placeholder="Search products..." class="w-full pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 transition">
+                                </div>
+                                <select id="filterProduct" class="w-full sm:w-auto p-2.5 border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none text-sm font-medium focus:ring-2 focus:ring-indigo-500 transition">
+                                    <option value="all">All Products</option>
+                                    <option value="out">Out of Stock</option>
+                                </select>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm whitespace-nowrap" id="tblProducts">
+                                    <thead class="bg-slate-50 dark:bg-slate-700/50">
+                                        <tr>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Product</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Category</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Pricing</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Stock</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Status</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="productTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                        <tr><td colspan="6" class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. ORDER INBOX -->
+                <section id="view-orders" class="view-section h-full">
+                    <div class="flex flex-col h-full">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white">Order Inbox</h2>
+                            <select id="filterOrder" onchange="renderOrders()" class="p-2.5 border border-slate-200 rounded-2xl dark:bg-slate-800 dark:border-slate-700 outline-none text-sm font-bold shadow-sm focus:ring-2 focus:ring-indigo-500">
+                                <option value="All">All Orders</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Shipping">Shipping</option>
+                                <option value="Delivered">Delivered</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex-1 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden flex flex-col">
+                            <div class="overflow-x-auto flex-1">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 dark:bg-slate-700/50 sticky top-0 z-10 shadow-sm">
+                                        <tr>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Order ID</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Customer Details</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Amount</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Method</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Status</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="orderTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. CUSTOMERS -->
+                <section id="view-customers" class="view-section">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-8">Customer Insights</h2>
+                        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+                            <div class="p-5 border-b dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+                                <div class="relative md:w-1/3">
+                                    <i class="fa-solid fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                                    <input type="text" id="searchCustomer" onkeyup="filterTable('tblCustomers', this.value)" placeholder="Search customer phone..." class="w-full pl-12 pr-4 py-2.5 bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none text-sm focus:ring-2 focus:ring-indigo-500 transition">
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm whitespace-nowrap" id="tblCustomers">
+                                    <thead class="bg-slate-50 dark:bg-slate-700/50">
+                                        <tr>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Customer Name</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Phone Number</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Total Orders</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Total Spent</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="customerTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. CHAT SYSTEM -->
+                <section id="view-chats" class="view-section h-full">
+                    <div class="flex flex-col h-full">
+                        <div class="flex justify-between items-center mb-8">
+                            <div>
+                                <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white">Support Inbox</h2>
+                                <p class="text-slate-500 text-sm font-medium mt-1">Chat directly with your customers in real-time.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden flex flex-col">
+                            <div class="overflow-x-auto flex-1">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead class="bg-slate-50 dark:bg-slate-700/50 sticky top-0 z-10 shadow-sm">
+                                        <tr>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Customer Name</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Latest Message</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Time</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="chatTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                        <tr><td colspan="4" class="text-center py-10"><i class="fa-solid fa-spinner fa-spin text-pink-500 text-2xl"></i></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. BANNERS & ADS -->
+                <section id="view-banners" class="view-section">
+                    <div>
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                            <div>
+                                <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white">Ad Banners</h2>
+                                <p class="text-slate-500 text-sm font-medium mt-1">Manage advertisements shown on the user app.</p>
+                            </div>
+                            <button onclick="openBannerModal()" class="bg-orange-500 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-orange-500/30 hover:bg-orange-600 flex items-center gap-2 transition-all"><i class="fa-solid fa-plus"></i> Upload Ad Banner</button>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm whitespace-nowrap" id="tblBanners">
+                                    <thead class="bg-slate-50 dark:bg-slate-700/50">
+                                        <tr>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Banner Image</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Target Link</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300">Status</th>
+                                            <th class="p-5 font-bold text-slate-500 dark:text-slate-300 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bannerTableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. SETTINGS -->
+                <section id="view-settings" class="view-section">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-8">System Settings</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 relative overflow-hidden">
+                                <div class="absolute -right-10 -top-10 text-indigo-50 dark:text-slate-700/20 text-9xl"><i class="fa-solid fa-wallet"></i></div>
+                                <h3 class="font-extrabold text-xl mb-6 relative z-10 text-slate-800 dark:text-white">Payment Configuration</h3>
+                                <form id="paymentForm" class="space-y-5 relative z-10">
+                                    <div>
+                                        <label class="block text-sm font-bold mb-2 text-slate-600 dark:text-slate-400">bKash Number</label>
+                                        <input type="text" id="setBkash" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold mb-2 text-slate-600 dark:text-slate-400">Nagad Number</label>
+                                        <input type="text" id="setNagad" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition font-medium">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-5">
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2 text-slate-600 dark:text-slate-400">Delivery Charge (৳)</label>
+                                            <input type="number" id="setDelivery" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition font-medium">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2 text-slate-600 dark:text-slate-400">Advance Policy</label>
+                                            <select id="setAdvance" class="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 transition font-medium">
+                                                <option value="0">Only Delivery</option>
+                                                <option value="50">50% Advance</option>
+                                                <option value="100">100% Full</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full bg-slate-800 text-white py-3.5 rounded-2xl font-bold hover:bg-slate-900 shadow-lg hover:shadow-xl transition mt-4 dark:bg-indigo-600 dark:hover:bg-indigo-700">Save Configuration</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-2xl h-[80vh] md:h-[70vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+            <!-- Header -->
+            <div class="p-5 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-black text-xl shadow-inner" id="chatMdlInitial">U</div>
+                    <div>
+                        <h3 class="font-extrabold text-lg text-slate-800 dark:text-white" id="chatMdlName">Customer</h3>
+                        <p class="text-xs font-medium text-slate-500" id="chatMdlPhone">Phone</p>
+                    </div>
+                </div>
+                <button onclick="closeChatModal()" class="text-slate-400 hover:text-red-500 text-2xl w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <!-- Body -->
+            <div class="flex-1 overflow-y-auto p-5 custom-scroll bg-slate-50/50 dark:bg-slate-900/50 space-y-4 flex flex-col" id="chatMessagesArea">
+                <!-- Messages will be injected here -->
+            </div>
+            <!-- Input -->
+            <div class="p-4 bg-white dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700">
+                <form id="chatReplyForm" class="flex gap-3">
+                    <input type="text" id="chatReplyInput" placeholder="Type your reply here..." class="flex-1 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium transition" required autocomplete="off">
+                    <button type="submit" class="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-indigo-700 transition shadow-md hover:shadow-lg"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner Modal -->
+    <div id="bannerModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+            <div class="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-xl font-extrabold">Upload Ad Banner</h3>
+                <button onclick="closeModal('bannerModal')" class="text-slate-400 hover:text-red-500 text-2xl transition bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="bId">
+                <div class="mb-5">
+                    <label class="block text-sm font-bold mb-2">Target Link (Optional)</label>
+                    <input type="text" id="bLink" placeholder="e.g. products offer link" class="w-full border border-slate-200 p-3.5 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-orange-500 font-medium">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold mb-2">Banner Image</label>
+                    <input type="file" id="nativeBannerInput" accept="image/*" class="hidden">
+                    
+                    <div onclick="document.getElementById('nativeBannerInput').click()" class="border-2 border-dashed border-orange-300 dark:border-orange-700/50 bg-orange-50/50 dark:bg-orange-900/10 text-orange-500 rounded-2xl p-8 text-center cursor-pointer hover:bg-orange-50 transition">
+                        <i class="fa-solid fa-cloud-arrow-up text-4xl mb-3"></i>
+                        <p class="font-bold">Select Banner Image</p>
+                        <p class="text-xs mt-1 opacity-70 text-slate-500">Wide images recommended (e.g., 1000x300)</p>
+                    </div>
+                    
+                    <div id="bannerUploadLoader" class="hidden mt-3 text-sm text-orange-500 font-bold flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Uploading banner...
+                    </div>
+                    
+                    <div id="bannerPreview" class="mt-4 hidden relative rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                        <img id="bImgSrc" src="" class="w-full h-32 object-cover">
+                        <button type="button" onclick="removeBannerImage()" class="absolute top-2 right-2 bg-red-500 text-white w-8 h-8 rounded-full shadow-md hover:bg-red-600 flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                <button type="button" onclick="saveBanner()" id="btnSaveBanner" class="w-full py-3.5 rounded-2xl bg-orange-500 text-white font-bold hover:bg-orange-600 shadow-lg hover:shadow-orange-500/30 transition text-lg">Publish Banner</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+            <div class="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-xl font-extrabold" id="productModalTitle">Add New Product</h3>
+                <button onclick="closeModal('productModal')" class="text-slate-400 hover:text-red-500 text-2xl transition bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll flex-1">
+                <form id="productForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <input type="hidden" id="pId">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold mb-2">Product Name</label>
+                        <input type="text" id="pName" class="w-full border border-slate-200 p-3.5 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required>
+                    </div>
+                    
+                    <div><label class="block text-sm font-bold mb-2">Regular Price (৳)</label>
+                        <input type="number" id="pPrice" class="w-full border border-slate-200 p-3.5 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required></div>
+                    
+                    <div><label class="block text-sm font-bold mb-2">Offer Price (Optional)</label>
+                        <input type="number" id="pOfferPrice" class="w-full border border-slate-200 p-3.5 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 font-medium"></div>
+                    
+                    <div><label class="block text-sm font-bold mb-2">Stock Quantity</label>
+                        <input type="number" id="pStock" class="w-full border border-slate-200 p-3.5 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required></div>
+                    
+                    <div><label class="block text-sm font-bold mb-2">Category</label>
+                        <input type="text" id="pCategory" placeholder="e.g. Fashion" class="w-full border border-slate-200 p-3.5 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 font-medium" required></div>
+                    
+                    <div class="md:col-span-2"><label class="block text-sm font-bold mb-2">Description</label>
+                        <textarea id="pDesc" rows="3" class="w-full border border-slate-200 p-3.5 rounded-2xl dark:bg-slate-900 dark:border-slate-700 outline-none focus:ring-2 focus:ring-indigo-500 font-medium custom-scroll"></textarea></div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-bold mb-2">Product Images</label>
+                        <input type="file" id="nativeImageInput" multiple accept="image/*" class="hidden">
+                        
+                        <div onclick="document.getElementById('nativeImageInput').click()" class="border-2 border-dashed border-indigo-300 dark:border-indigo-700 bg-indigo-50/50 dark:bg-indigo-900/10 text-indigo-500 rounded-2xl p-6 text-center cursor-pointer hover:bg-indigo-50 transition">
+                            <i class="fa-solid fa-images text-3xl mb-2"></i>
+                            <p class="font-bold">Click to select images</p>
+                            <p class="text-xs mt-1 opacity-70 text-slate-500">JPG, PNG up to 5MB</p>
+                        </div>
+                        
+                        <div id="imageUploadLoader" class="hidden mt-3 text-sm text-indigo-600 font-bold flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Uploading to server...
+                        </div>
+                        <div id="imagePreview" class="flex flex-wrap gap-4 mt-4"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="p-6 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-4 bg-slate-50 dark:bg-slate-800/50">
+                <button type="button" onclick="closeModal('productModal')" class="px-6 py-3 rounded-2xl bg-white border border-slate-200 dark:bg-slate-700 dark:border-slate-600 font-bold hover:shadow transition">Cancel</button>
+                <button type="button" onclick="saveProduct()" id="btnSaveProduct" class="px-8 py-3 rounded-2xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg hover:shadow-indigo-500/30 transition">Publish Product</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="orderModal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+            <div class="flex justify-between items-center p-6 border-b border-slate-100 dark:border-slate-700">
+                <h3 class="text-xl font-extrabold flex items-center gap-2">Order Details <span id="mdlApprovedBadge"></span></h3>
+                <button onclick="closeModal('orderModal')" class="text-slate-400 hover:text-red-500 text-2xl bg-slate-100 dark:bg-slate-700 rounded-full w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto custom-scroll flex-1 print-full" id="printArea">
+                <div class="bg-indigo-50 dark:bg-indigo-900/20 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-800 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
+                    <div><p class="font-bold text-indigo-800 dark:text-indigo-300">Order Progress</p></div>
+                    <div class="flex gap-3 w-full sm:w-auto">
+                        <select id="mdlStatusSelect" class="flex-1 sm:w-48 p-2.5 border border-indigo-200 rounded-xl font-bold text-sm outline-none dark:bg-slate-800 dark:border-indigo-700 focus:ring-2 focus:ring-indigo-500">
+                            <option value="Pending">Pending</option>
+                            <option value="Confirmed">Confirmed</option>
+                            <option value="Shipping">Shipping</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <button onclick="updateOrderStatus()" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-md">Update</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="border border-slate-100 dark:border-slate-700 p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50">
+                        <h4 class="font-extrabold mb-4 text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">Customer Info</h4>
+                        <p class="text-sm mb-2"><span class="text-slate-500 w-20 inline-block font-medium">Name:</span> <span id="mdlCName" class="font-bold text-slate-800 dark:text-white"></span></p>
+                        <p class="text-sm mb-2"><span class="text-slate-500 w-20 inline-block font-medium">Phone:</span> <span id="mdlCPhone" class="font-bold text-slate-800 dark:text-white"></span></p>
+                        <p class="text-sm flex"><span class="text-slate-500 w-20 inline-block font-medium flex-shrink-0">Address:</span> <span id="mdlCAddress" class="font-medium"></span></p>
+                    </div>
+                    <div class="border border-slate-100 dark:border-slate-700 p-6 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50">
+                        <h4 class="font-extrabold mb-4 text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700 pb-2">Payment Summary</h4>
+                        <p class="text-sm mb-2"><span class="text-slate-500 w-24 inline-block font-medium">Method:</span> <span id="mdlPayMethod" class="uppercase font-extrabold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded"></span></p>
+                        <p class="text-sm mb-4"><span class="text-slate-500 w-24 inline-block font-medium">TrxID:</span> <span id="mdlTrx" class="font-mono text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded"></span></p>
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+                            <p class="text-sm mb-2 flex justify-between font-medium"><span class="text-slate-500">Subtotal:</span> ৳<span id="mdlSubtotal"></span></p>
+                            <p class="text-sm mb-2 flex justify-between font-medium"><span class="text-slate-500">Delivery:</span> ৳<span id="mdlDelCharge"></span></p>
+                            <p class="text-xl font-black text-indigo-600 flex justify-between mt-2 pt-2 border-t border-slate-200 dark:border-slate-700"><span class="text-slate-800 dark:text-white">Total:</span> ৳<span id="mdlTotal"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="font-extrabold mb-4 text-slate-800 dark:text-slate-200">Order Items</h4>
+                <div class="border border-slate-100 dark:border-slate-700 rounded-2xl overflow-hidden shadow-sm">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 dark:bg-slate-700/50"><tr><th class="p-4 font-bold text-slate-500">Item</th><th class="p-4 font-bold text-center text-slate-500">Qty</th><th class="p-4 font-bold text-right text-slate-500">Price</th></tr></thead>
+                        <tbody id="mdlItems" class="divide-y divide-slate-100 dark:divide-slate-700 bg-white dark:bg-slate-800"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-24 right-4 bg-slate-900/95 backdrop-blur-md text-white px-6 py-4 rounded-2xl shadow-2xl transform translate-x-full transition-all duration-300 z-[100] flex items-center gap-4 border border-slate-700">
+        <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-inner"><i class="fa-solid fa-bell text-sm"></i></div>
+        <span id="toastMsg" class="font-bold text-sm tracking-wide">Message</span>
+    </div>
+
+    <!-- Script / Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1tUj2W61ogTBWmIGCcLfxEPpC9bTzklA",
+            authDomain: "shopping-60522.firebaseapp.com",
+            projectId: "shopping-60522",
+            storageBucket: "shopping-60522.firebasestorage.app",
+            messagingSenderId: "760708854745",
+            appId: "1:760708854745:web:288f3cad7a560cc7489fc8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // CLOUDINARY
+        const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/dbjagtk3n/image/upload";
+        const CLOUDINARY_PRESET = "shopping"; 
+
+        // State
+        window.allProducts = [];
+        window.allOrders = [];
+        window.allBanners = [];
+        window.allChats = [];
+        
+        let uploadedImages = [];
+        let uploadedBannerImgUrl = "";
+        let currentViewingOrderId = null;
+        let salesChartInstance = null;
+        
+        // Chat state
+        let currentChatId = null;
+        let currentChatUnsubscribe = null;
+
+        // UI Helpers
+        const toast = (msg) => {
+            document.getElementById('toastMsg').innerText = msg;
+            document.getElementById('toast').classList.remove('translate-x-full');
+            setTimeout(() => document.getElementById('toast').classList.add('translate-x-full'), 3000);
+        }
+        window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        window.switchView = (viewId) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-white/10', 'active-nav', 'border-l-4', 'border-indigo-400'));
+            const activeBtn = document.querySelector(`[data-view="${viewId}"]`);
+            if(activeBtn) activeBtn.classList.add('bg-white/10', 'active-nav', 'border-l-4', 'border-indigo-400');
+            if(window.innerWidth < 768) toggleSidebar();
+        }
+        window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        
+        // Theme
+        if(localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        });
+
+        // Search
+        window.filterTable = (tableId, text) => {
+            text = text.toLowerCase();
+            const rows = document.getElementById(tableId).getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            for(let row of rows) {
+                row.style.display = row.innerText.toLowerCase().includes(text) ? '' : 'none';
+            }
+        }
+
+        // ================= AUTHENTICATION =================
+        const loginScreen = document.getElementById('loginScreen');
+        const mainApp = document.getElementById('mainApp');
+        const authBtn = document.getElementById('authBtn');
+
+        document.getElementById('adminAuthForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const em = document.getElementById('authEmail').value;
+            const ps = document.getElementById('authPass').value;
+            authBtn.innerText = "Authenticating...";
+            try { await signInWithEmailAndPassword(auth, em, ps); } 
+            catch (err) {
+                try { await createUserWithEmailAndPassword(auth, em, ps); } 
+                catch(err2) { toast(err2.message); authBtn.innerText = "Authenticate"; }
+            }
+        });
+
+        window.logoutAdmin = async () => { await signOut(auth); }
+
+        onAuthStateChanged(auth, async (user) => {
+            if(user) {
+                const adminRef = doc(db, 'settings', 'adminAuth');
+                const adminDoc = await getDoc(adminRef);
+                if(!adminDoc.exists()) {
+                    await setDoc(adminRef, { adminUid: user.uid });
+                    toast("Registered as Master Admin!");
+                    grantAccess();
+                } else {
+                    if(adminDoc.data().adminUid === user.uid) grantAccess();
+                    else { toast("Access Denied! Not an admin."); await signOut(auth); }
+                }
+            } else {
+                loginScreen.classList.remove('hidden');
+                mainApp.classList.add('hidden');
+                authBtn.innerText = "Authenticate";
+            }
+        });
+
+        function grantAccess() {
+            loginScreen.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            toast("Access Granted");
+            initDataListeners();
+        }
+
+        // ================= DATA LISTENERS =================
+        const initDataListeners = () => {
+            // Settings
+            onSnapshot(doc(db, "settings", "admin"), (docSnap) => {
+                if(docSnap.exists()){
+                    const data = docSnap.data();
+                    document.getElementById('setBkash').value = data.bkash || '';
+                    document.getElementById('setNagad').value = data.nagad || '';
+                    document.getElementById('setDelivery').value = data.deliveryCharge || 0;
+                    document.getElementById('setAdvance').value = data.advancePercent || 0;
+                }
+            });
+
+            // Products
+            onSnapshot(collection(db, "products"), (snap) => {
+                window.allProducts = [];
+                snap.forEach(d => allProducts.push({id: d.id, ...d.data()}));
+                renderProducts();
+            });
+
+            // Orders
+            const ordersQuery = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+            onSnapshot(ordersQuery, (snap) => {
+                let oldLength = window.allOrders.length;
+                window.allOrders = [];
+                snap.forEach(d => allOrders.push({id: d.id, ...d.data()}));
+                if(oldLength > 0 && allOrders.length > oldLength) {
+                    document.getElementById('newOrderBadge').classList.remove('hidden');
+                    toast("New Order Received!");
+                }
+                renderOrders();
+                calculateDashboardStats();
+                aggregateCustomerData();
+            });
+
+            // Banners
+            onSnapshot(collection(db, "banners"), (snap) => {
+                window.allBanners = [];
+                snap.forEach(d => allBanners.push({id: d.id, ...d.data()}));
+                renderBanners();
+            });
+
+            // Support Chats
+            const chatsQuery = query(collection(db, "support_chats"), orderBy("lastUpdated", "desc"));
+            onSnapshot(chatsQuery, (snap) => {
+                let oldLength = window.allChats.length;
+                window.allChats = [];
+                snap.forEach(d => allChats.push({id: d.id, ...d.data()}));
+                if(oldLength > 0 && allChats.length > oldLength) {
+                    document.getElementById('newChatBadge').classList.remove('hidden');
+                    toast("New Support Message!");
+                }
+                renderChats();
+            });
+        }
+
+        // ================= SUPPORT CHAT LOGIC =================
+        window.renderChats = () => {
+            document.getElementById('chatTableBody').innerHTML = allChats.map(c => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 cursor-pointer transition border-b dark:border-slate-700/50 last:border-0" onclick="openChat('${c.id}', '${c.userName}', '${c.userPhone}')">
+                    <td class="p-5 font-bold text-slate-800 dark:text-white flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-900/30 text-pink-600 flex items-center justify-center font-extrabold shadow-sm">${(c.userName||'U').charAt(0).toUpperCase()}</div>
+                        ${c.userName || 'Unknown User'}
+                    </td>
+                    <td class="p-5 text-sm font-medium ${c.adminUnread ? 'text-slate-800 dark:text-white font-extrabold' : 'text-slate-500'} max-w-[200px] truncate">${c.lastMessage || 'No messages yet'}</td>
+                    <td class="p-5 text-xs font-bold text-slate-400">${c.lastUpdated ? new Date(c.lastUpdated.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}</td>
+                    <td class="p-5 text-right">
+                        <button class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-5 py-2 rounded-xl text-xs font-bold hover:bg-indigo-600 hover:text-white transition shadow-sm">Reply</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="text-center py-10 text-slate-500 font-medium">No messages found.</td></tr>';
+        };
+
+        window.openChat = (chatId, userName, userPhone) => {
+            currentChatId = chatId;
+            document.getElementById('chatMdlName').innerText = userName || 'Customer';
+            document.getElementById('chatMdlPhone').innerText = (userPhone !== 'undefined' && userPhone) ? userPhone : 'No Phone Provided';
+            document.getElementById('chatMdlInitial').innerText = (userName || 'U').charAt(0).toUpperCase();
+            document.getElementById('newChatBadge').classList.add('hidden');
+            
+            // Mark as read immediately
+            updateDoc(doc(db, "support_chats", chatId), { adminUnread: false }).catch(()=>{});
+
+            openModal('chatModal');
+            
+            if(currentChatUnsubscribe) currentChatUnsubscribe();
+            
+            const msgsRef = query(collection(db, "support_chats", chatId, "messages"), orderBy("timestamp", "asc"));
+            currentChatUnsubscribe = onSnapshot(msgsRef, (snap) => {
+                const area = document.getElementById('chatMessagesArea');
+                area.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const m = docSnap.data();
+                    const isAdmin = m.sender === 'admin';
+                    const timeStr = m.timestamp ? new Date(m.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Sending...';
+                    
+                    area.innerHTML += `
+                        <div class="flex w-full ${isAdmin ? 'justify-end' : 'justify-start'}">
+                            <div class="max-w-[75%] p-3.5 rounded-2xl text-sm shadow-sm ${isAdmin ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none'}">
+                                <p class="leading-relaxed">${m.text}</p>
+                                <div class="text-[10px] mt-1.5 font-bold ${isAdmin ? 'text-indigo-200 text-right' : 'text-slate-400 text-left'}">${timeStr}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                // Auto scroll to bottom
+                setTimeout(() => { area.scrollTop = area.scrollHeight; }, 100);
+            });
+        };
+
+        window.closeChatModal = () => {
+            if(currentChatUnsubscribe) { currentChatUnsubscribe(); currentChatUnsubscribe = null; }
+            currentChatId = null;
+            closeModal('chatModal');
+        };
+
+        document.getElementById('chatReplyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!currentChatId) return;
+            const input = document.getElementById('chatReplyInput');
+            const text = input.value.trim();
+            if(!text) return;
+            input.value = '';
+            
+            const timestamp = serverTimestamp();
+            // 1. Add Message to subcollection
+            await setDoc(doc(collection(db, "support_chats", currentChatId, "messages")), {
+                sender: 'admin',
+                text: text,
+                timestamp: timestamp
+            });
+            // 2. Update parent document
+            await updateDoc(doc(db, "support_chats", currentChatId), {
+                lastMessage: `Admin: ${text}`,
+                lastUpdated: timestamp,
+                userUnread: true,
+                adminUnread: false
+            });
+        });
+
+        // ===== Dashboard Stats & Chart =====
+        const calculateDashboardStats = () => {
+            let totalSales = 0, todaySales = 0, pending = 0;
+            const today = new Date().toDateString();
+            let salesByDate = {};
+            for(let i=6; i>=0; i--){
+                let d = new Date(); d.setDate(d.getDate() - i);
+                salesByDate[d.toLocaleDateString('en-GB')] = 0;
+            }
+
+            allOrders.forEach(o => {
+                if(o.status !== 'Cancelled' && o.status !== 'Return') {
+                    totalSales += o.grandTotal;
+                    let orderDateObj = o.createdAt ? o.createdAt.toDate() : new Date();
+                    if(orderDateObj.toDateString() === today) todaySales += o.grandTotal;
+                    let dateStr = orderDateObj.toLocaleDateString('en-GB');
+                    if(salesByDate[dateStr] !== undefined) salesByDate[dateStr] += o.grandTotal;
+                }
+                if(o.status === 'Pending') pending++;
+            });
+
+            const outOfStock = allProducts.filter(p => p.stock <= 0).length;
+
+            document.getElementById('statTotalSales').innerText = `৳${totalSales.toLocaleString()}`;
+            document.getElementById('statTodaySales').innerText = `৳${todaySales.toLocaleString()}`;
+            document.getElementById('statTotalOrders').innerText = allOrders.length;
+            document.getElementById('statPending').innerText = pending;
+            document.getElementById('statOutOfStock').innerText = outOfStock;
+
+            updateChart(Object.keys(salesByDate), Object.values(salesByDate));
+        }
+
+        const updateChart = (labels, data) => {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if(salesChartInstance) salesChartInstance.destroy();
+            
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: [{ 
+                    label: 'Sales (৳)', data, 
+                    borderColor: '#6366f1', borderWidth: 3,
+                    backgroundColor: gradient, fill: true, 
+                    tension: 0.4, pointBackgroundColor: '#fff',
+                    pointBorderColor: '#6366f1', pointBorderWidth: 2, pointRadius: 4
+                }]},
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        y: { beginAtZero: true, grid: { color: 'rgba(148, 163, 184, 0.1)' }, border: { dash: [4, 4] } }, 
+                        x: { grid: { display: false } } 
+                    } 
+                }
+            });
+        }
+
+        // ================= CLOUDINARY UPLOADERS =================
+
+        const bannerInput = document.getElementById('nativeBannerInput');
+        bannerInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('bannerUploadLoader').classList.remove('hidden');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_PRESET);
+            
+            try {
+                const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.secure_url) {
+                    uploadedBannerImgUrl = data.secure_url;
+                    document.getElementById('bImgSrc').src = uploadedBannerImgUrl;
+                    document.getElementById('bannerPreview').classList.remove('hidden');
+                }
+            } catch(error) { toast("Upload failed!"); }
+            document.getElementById('bannerUploadLoader').classList.add('hidden');
+            bannerInput.value = '';
+        });
+
+        window.removeBannerImage = () => {
+            uploadedBannerImgUrl = "";
+            document.getElementById('bannerPreview').classList.add('hidden');
+        }
+
+        const imageInput = document.getElementById('nativeImageInput');
+        imageInput.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if(files.length === 0) return;
+            document.getElementById('imageUploadLoader').classList.remove('hidden');
+            
+            for(let file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_PRESET);
+                try {
+                    const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if(data.secure_url) {
+                        uploadedImages.push(data.secure_url);
+                        renderImagePreview();
+                    }
+                } catch(error) {}
+            }
+            document.getElementById('imageUploadLoader').classList.add('hidden');
+            imageInput.value = ''; 
+        });
+
+        const renderImagePreview = () => {
+            const container = document.getElementById('imagePreview');
+            container.innerHTML = uploadedImages.map((url, i) => `
+                <div class="relative w-20 h-20 rounded-xl border border-slate-200 overflow-hidden shadow-sm group">
+                    <img src="${url}" class="w-full h-full object-cover">
+                    <button type="button" onclick="removeImage(${i})" class="absolute inset-0 bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+        window.removeImage = (i) => { uploadedImages.splice(i, 1); renderImagePreview(); }
+
+        // ================= CRUD: BANNERS =================
+        window.renderBanners = () => {
+            document.getElementById('bannerTableBody').innerHTML = allBanners.map(b => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition border-b dark:border-slate-700/50 last:border-0">
+                    <td class="p-5"><img src="${b.image}" class="h-16 w-32 object-cover rounded-xl border border-slate-200 shadow-sm"></td>
+                    <td class="p-5 text-sm font-medium text-slate-500">${b.link || 'No Link'}</td>
+                    <td class="p-5">
+                        <button onclick="toggleBannerStatus('${b.id}', ${b.active})" class="px-4 py-1.5 rounded-full text-xs font-bold ${b.active?'bg-green-100 text-green-700':'bg-slate-200 text-slate-600'}">${b.active ? 'Active' : 'Hidden'}</button>
+                    </td>
+                    <td class="p-5 text-right">
+                        <button onclick="deleteBanner('${b.id}')" class="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition shadow-sm"><i class="fa-solid fa-trash text-sm"></i></button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" class="text-center py-8 text-slate-500">No Banners Found</td></tr>';
+        }
+
+        window.openBannerModal = () => {
+            document.getElementById('bId').value = '';
+            document.getElementById('bLink').value = '';
+            uploadedBannerImgUrl = '';
+            document.getElementById('bannerPreview').classList.add('hidden');
+            openModal('bannerModal');
+        }
+
+        window.saveBanner = async () => {
+            if(!uploadedBannerImgUrl) return toast("Image required!");
+            const data = {
+                image: uploadedBannerImgUrl,
+                link: document.getElementById('bLink').value,
+                active: true,
+                createdAt: serverTimestamp()
+            };
+            const btn = document.getElementById('btnSaveBanner');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publishing...';
+            try {
+                await setDoc(doc(collection(db, "banners")), data);
+                closeModal('bannerModal');
+                toast("Banner Published!");
+            } catch(e) { toast("Error saving"); }
+            btn.innerHTML = 'Publish Banner';
+        }
+
+        window.deleteBanner = async (id) => {
+            if(confirm("Delete this banner?")){
+                await deleteDoc(doc(db, "banners", id));
+                toast("Banner Deleted");
+            }
+        }
+        window.toggleBannerStatus = async (id, currentStatus) => {
+            await updateDoc(doc(db, "banners", id), { active: !currentStatus });
+        }
+
+
+        // ================= CRUD: PRODUCTS =================
+        window.renderProducts = () => {
+            document.getElementById('productTableBody').innerHTML = allProducts.map(p => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition border-b dark:border-slate-700/50 last:border-0">
+                    <td class="p-5 flex items-center gap-4">
+                        <img src="${p.images?.[0] || 'https://via.placeholder.com/50'}" class="w-12 h-12 object-cover rounded-xl border shadow-sm">
+                        <div><p class="font-bold text-sm text-slate-800 dark:text-white">${p.name}</p></div>
+                    </td>
+                    <td class="p-5 text-sm font-medium text-slate-500">${p.category}</td>
+                    <td class="p-5 font-black text-indigo-600 text-sm">৳${p.offerPrice || p.price}</td>
+                    <td class="p-5"><span class="px-3 py-1 rounded-full text-xs font-bold ${p.stock>0?'bg-emerald-100 text-emerald-700':'bg-rose-100 text-rose-700'}">${p.stock} in stock</span></td>
+                    <td class="p-5"><button onclick="toggleProductStatus('${p.id}', '${p.status}')" class="text-xs font-bold px-3 py-1 rounded-full ${p.status==='show'?'bg-blue-100 text-blue-700':'bg-slate-200 text-slate-600'}">${p.status === 'show' ? 'Visible' : 'Hidden'}</button></td>
+                    <td class="p-5 text-right">
+                        <button onclick="editProduct('${p.id}')" class="w-9 h-9 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white transition"><i class="fa-solid fa-pen text-sm"></i></button>
+                        <button onclick="deleteProduct('${p.id}')" class="w-9 h-9 rounded-full bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition ml-2"><i class="fa-solid fa-trash text-sm"></i></button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" class="text-center py-8 text-slate-500">No Products found</td></tr>';
+        }
+
+        window.openProductModal = () => {
+            document.getElementById('productForm').reset();
+            document.getElementById('pId').value = '';
+            document.getElementById('productModalTitle').innerText = 'Add New Product';
+            uploadedImages = [];
+            renderImagePreview();
+            openModal('productModal');
+        }
+
+        window.editProduct = (id) => {
+            const p = allProducts.find(x => x.id === id);
+            if(!p) return;
+            document.getElementById('pId').value = p.id;
+            document.getElementById('pName').value = p.name;
+            document.getElementById('pPrice').value = p.price;
+            document.getElementById('pOfferPrice').value = p.offerPrice || '';
+            document.getElementById('pStock').value = p.stock;
+            document.getElementById('pCategory').value = p.category;
+            document.getElementById('pDesc').value = p.description || '';
+            
+            uploadedImages = [...(p.images || [])];
+            renderImagePreview();
+            document.getElementById('productModalTitle').innerText = 'Edit Product';
+            openModal('productModal');
+        }
+
+        window.saveProduct = async () => {
+            const id = document.getElementById('pId').value;
+            if(uploadedImages.length === 0) return toast("Upload at least 1 image");
+            
+            const data = {
+                name: document.getElementById('pName').value,
+                price: Number(document.getElementById('pPrice').value),
+                offerPrice: Number(document.getElementById('pOfferPrice').value),
+                stock: Number(document.getElementById('pStock').value),
+                category: document.getElementById('pCategory').value,
+                description: document.getElementById('pDesc').value,
+                images: uploadedImages,
+                status: id ? undefined : "show",
+                updatedAt: serverTimestamp()
+            };
+            if(!id) data.createdAt = serverTimestamp();
+
+            const btn = document.getElementById('btnSaveProduct');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            try {
+                if(id) await updateDoc(doc(db, "products", id), data);
+                else await setDoc(doc(collection(db, "products")), data);
+                closeModal('productModal');
+                toast(id ? "Product Updated" : "Product Published");
+            } catch(e) { toast("Error"); }
+            btn.innerHTML = 'Publish Product';
+        }
+
+        window.deleteProduct = async (id) => {
+            if(confirm("Delete this product?")){
+                await deleteDoc(doc(db, "products", id));
+                toast("Deleted");
+            }
+        }
+        window.toggleProductStatus = async (id, currentStatus) => {
+            await updateDoc(doc(db, "products", id), { status: currentStatus === 'show' ? 'hide' : 'show' });
+        }
+
+        // ================= ORDERS =================
+        window.renderOrders = () => {
+            const filter = document.getElementById('filterOrder').value;
+            document.getElementById('orderTableBody').innerHTML = allOrders.filter(o => filter === 'All' || o.status === filter).map(o => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition border-b dark:border-slate-700/50 last:border-0">
+                    <td class="p-5 text-sm font-mono font-bold text-slate-500">#${o.id.substring(0,6).toUpperCase()}</td>
+                    <td class="p-5"><p class="font-bold text-sm text-slate-800 dark:text-white">${o.customerInfo.name}</p><p class="text-xs text-slate-500">${o.customerInfo.phone}</p></td>
+                    <td class="p-5 font-black text-indigo-600 text-sm">৳${o.grandTotal}</td>
+                    <td class="p-5 text-xs font-bold uppercase text-slate-500">${o.paymentType}</td>
+                    <td class="p-5 font-bold text-sm">
+                        <span class="px-3 py-1 rounded-full text-xs shadow-sm ${o.status==='Pending'?'bg-amber-100 text-amber-700':(o.status==='Cancelled'?'bg-rose-100 text-rose-700':'bg-emerald-100 text-emerald-700')}">${o.status}</span>
+                    </td>
+                    <td class="p-5 text-right">
+                        <button onclick="viewOrder('${o.id}')" class="bg-white border border-slate-200 text-indigo-600 px-5 py-2 rounded-xl text-xs font-bold hover:bg-indigo-50 transition shadow-sm">Review</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="6" class="text-center py-8 text-slate-500">No orders found.</td></tr>';
+        }
+
+        window.viewOrder = (id) => {
+            currentViewingOrderId = id;
+            const o = allOrders.find(x => x.id === id);
+            document.getElementById('newOrderBadge').classList.add('hidden');
+            
+            document.getElementById('mdlStatusSelect').value = o.status;
+            const isApproved = (o.status !== 'Pending' && o.status !== 'Cancelled');
+            document.getElementById('mdlApprovedBadge').innerHTML = isApproved ? '<i class="fa-solid fa-certificate text-emerald-500 text-xl ml-2"></i>' : '';
+
+            document.getElementById('mdlCName').innerText = o.customerInfo.name;
+            document.getElementById('mdlCPhone').innerText = o.customerInfo.phone;
+            document.getElementById('mdlCAddress').innerText = typeof o.customerInfo.address === 'object' ? Object.values(o.customerInfo.address).join(', ') : o.customerInfo.address;
+
+            document.getElementById('mdlPayMethod').innerText = o.paymentType;
+            document.getElementById('mdlTrx').innerText = o.trxId || 'N/A';
+            document.getElementById('mdlSubtotal').innerText = o.subtotal;
+            document.getElementById('mdlDelCharge').innerText = o.deliveryCharge;
+            document.getElementById('mdlTotal').innerText = o.grandTotal;
+
+            document.getElementById('mdlItems').innerHTML = o.items.map(i => `
+                <tr class="border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+                    <td class="p-4 flex items-center gap-4">
+                        <img src="${i.image}" class="w-12 h-12 object-cover rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+                        <p class="font-bold text-sm text-slate-800 dark:text-white">${i.name}</p>
+                    </td>
+                    <td class="p-4 text-sm font-black text-center text-slate-500 bg-slate-50 dark:bg-slate-800/50">x${i.qty}</td>
+                    <td class="p-4 text-right font-black text-indigo-600 text-sm">৳${i.price * i.qty}</td>
+                </tr>
+            `).join('');
+
+            openModal('orderModal');
+        }
+
+        window.updateOrderStatus = async () => {
+            const newStatus = document.getElementById('mdlStatusSelect').value;
+            await updateDoc(doc(db, "orders", currentViewingOrderId), { status: newStatus });
+            toast(`Order updated to ${newStatus}`);
+            const isApproved = (newStatus !== 'Pending' && newStatus !== 'Cancelled');
+            document.getElementById('mdlApprovedBadge').innerHTML = isApproved ? '<i class="fa-solid fa-certificate text-emerald-500 text-xl ml-2"></i>' : '';
+        }
+
+        // ================= CUSTOMERS =================
+        const aggregateCustomerData = () => {
+            const custMap = {};
+            allOrders.forEach(o => {
+                const ph = o.customerInfo.phone;
+                if(!custMap[ph]) custMap[ph] = { name: o.customerInfo.name, phone: ph, orders: 0, spent: 0 };
+                custMap[ph].orders += 1;
+                custMap[ph].spent += (o.status !== 'Cancelled' ? o.grandTotal : 0);
+            });
+
+            const arr = Object.values(custMap).sort((a,b) => b.spent - a.spent);
+            document.getElementById('customerTableBody').innerHTML = arr.map(c => `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition border-b dark:border-slate-700/50 last:border-0">
+                    <td class="p-5 font-bold text-sm text-slate-800 dark:text-white">${c.name}</td>
+                    <td class="p-5 text-sm font-mono text-slate-500">${c.phone}</td>
+                    <td class="p-5"><span class="text-sm font-black text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 px-4 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-800">${c.orders} Orders</span></td>
+                    <td class="p-5 text-sm font-black text-emerald-600">৳${c.spent}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ================= SETTINGS =================
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                bkash: document.getElementById('setBkash').value,
+                nagad: document.getElementById('setNagad').value,
+                deliveryCharge: Number(document.getElementById('setDelivery').value),
+                advancePercent: Number(document.getElementById('setAdvance').value)
+            };
+            await updateDoc(doc(db, "settings", "admin"), data).catch(()=>setDoc(doc(db, "settings", "admin"), data));
+            toast("Settings Saved!");
+        });
+
+    </script>
+</body>
+</html>
