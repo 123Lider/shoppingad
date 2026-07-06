@@ -653,40 +653,46 @@
             for(let row of rows) row.style.display = row.innerText.toLowerCase().includes(text) ? '' : 'none';
         }
 
-        // ================= VIDEO UPLOAD LOGIC =================
-        const videoInput = document.getElementById('nativeVideoInput');
-        videoInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-            
-            // ফাইল সাইজ চেক (Cloudinary Free tier এ বড় ভিডিও আপলোডে সমস্যা হতে পারে)
-            if(file.size > 25 * 1024 * 1024) { // 25MB Limit for example
-               return alert("ভিডিও ফাইলটি অনেক বড়! ২৫ মেগাবাইটের নিচের ভিডিও আপলোড করুন।");
-            }
+        // ================= VIDEO UPLOAD LOGIC (UNLIMITED SIZE) =================
+const videoInput = document.getElementById('nativeVideoInput');
+videoInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    // ২৫ মেগাবাইটের লিমিট রিমুভ করা হয়েছে
+    // এখন যেকোনো সাইজের ভিডিও আপলোড করার চেষ্টা করবে
 
-            document.getElementById('videoUploadLoader').classList.remove('hidden');
-            const formData = new FormData(); 
-            formData.append('file', file); 
-            formData.append('upload_preset', CLOUDINARY_PRESET);
+    document.getElementById('videoUploadLoader').classList.remove('hidden');
+    const formData = new FormData(); 
+    formData.append('file', file); 
+    formData.append('upload_preset', CLOUDINARY_PRESET);
 
-            try {
-                // সরাসরি ভিডিও আপলোড ক্লাউডিনারিতে
-                const res = await fetch(CLOUDINARY_VID_URL, { method: 'POST', body: formData });
-                const data = await res.json();
-                if(data.secure_url) {
-                    uploadedVideoUrl = data.secure_url;
-                    showVideoPreview(uploadedVideoUrl);
-                    toast("Video uploaded successfully!");
-                } else {
-                    toast("Video upload failed!");
-                }
-            } catch(e) { 
-                console.error(e);
-                toast("Upload failed! Check internet."); 
-            }
-            document.getElementById('videoUploadLoader').classList.add('hidden'); 
-            videoInput.value = '';
-        });
+    try {
+        // ভিডিও আপলোড শুরু
+        const res = await fetch(CLOUDINARY_VID_URL, { method: 'POST', body: formData });
+        
+        if (!res.ok) {
+            const errorData = await res.json();
+            console.error("Cloudinary Error:", errorData);
+            throw new Error(errorData.error.message || "Upload failed");
+        }
+
+        const data = await res.json();
+        if(data.secure_url) {
+            uploadedVideoUrl = data.secure_url;
+            showVideoPreview(uploadedVideoUrl);
+            toast("Video uploaded successfully!");
+        } else {
+            toast("Video upload failed!");
+        }
+    } catch(e) { 
+        console.error(e);
+        // ক্লাউডিনারি ফ্রি অ্যাকাউন্টে সাধারণত ১০০ মেগাবাইটের বেশি ভিডিও আপলোডে সমস্যা হতে পারে
+        toast("Upload failed! " + e.message); 
+    }
+    document.getElementById('videoUploadLoader').classList.add('hidden'); 
+    videoInput.value = '';
+});
 
         const showVideoPreview = (url) => {
             const container = document.getElementById('videoPreviewContainer');
