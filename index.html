@@ -764,9 +764,12 @@ videoInput.addEventListener('change', async (e) => {
                 }
             });
             onSnapshot(collection(db, "products"), (snap) => {
-                window.allProducts = []; snap.forEach(d => allProducts.push({id: d.id, ...d.data()}));
-                renderProducts();
-            });
+    console.log("Admin products:", snap.size); // এই লাইনটা যোগ করো
+
+    window.allProducts = [];
+    snap.forEach(d => allProducts.push({id: d.id, ...d.data()}));
+    renderProducts();
+});
             onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc")), (snap) => {
                 window.allOrders = []; snap.forEach(d => allOrders.push({id: d.id, ...d.data()}));
                 renderOrders(); calculateDashboardStats(); aggregateCustomerData();
@@ -901,20 +904,22 @@ videoInput.addEventListener('change', async (e) => {
         }
 
         window.saveProduct = async () => {
-            const id = document.getElementById('pId').value;
-            if(uploadedImages.length === 0) return toast("Upload at least 1 image");
-            
-            const data = {
-                name: document.getElementById('pName').value,
-                price: Number(document.getElementById('pPrice').value),
-                offerPrice: Number(document.getElementById('pOfferPrice').value) || 0,
-                stock: Number(document.getElementById('pStock').value),
-                category: document.getElementById('pCategory').value,
-                description: document.getElementById('pDesc').value,
-                images: uploadedImages,
-                videoUrl: uploadedVideoUrl, // Saving the direct upload link
-                updatedAt: serverTimestamp()
-            };
+    const id = document.getElementById('pId').value;
+    if(uploadedImages.length === 0) return toast("Upload at least 1 image");
+    
+    const data = {
+        name: document.getElementById('pName').value,
+        price: Number(document.getElementById('pPrice').value),
+        offerPrice: Number(document.getElementById('pOfferPrice').value) || 0,
+        stock: Number(document.getElementById('pStock').value),
+        category: document.getElementById('pCategory').value,
+        description: document.getElementById('pDesc').value,
+        images: uploadedImages,
+        videoUrl: uploadedVideoUrl,
+        status: "show", // <--- এই লাইনটি অবশ্যই যোগ করুন
+        updatedAt: serverTimestamp()
+    };
+    // ... বাকি কোড আগের মতোই থাকবে
             if(!id) { data.createdAt = serverTimestamp(); }
 
             const btn = document.getElementById('btnSaveProduct'); btn.innerHTML = 'Saving...';
